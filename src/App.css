@@ -19,7 +19,7 @@ body { -webkit-text-size-adjust: 100%; }
   min-height: 100dvh;
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr;
   color: var(--ink);
   padding-left: max(var(--pad), env(safe-area-inset-left));
   padding-right: max(var(--pad), env(safe-area-inset-right));
@@ -27,50 +27,13 @@ body { -webkit-text-size-adjust: 100%; }
 }
 .aurora-bg { position: absolute; inset: 0; }
 
-.bar {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: max(16px, env(safe-area-inset-top));
-}
-.brand {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(1.1rem, 4.2vw, 1.5rem);
-  letter-spacing: 0.02em;
-}
 
 .content {
   position: relative;
   z-index: 1;
   align-self: center;
   max-width: 46rem;
-  padding: 32px 0;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 20px;
-  padding: 6px 14px;
-  font-family: var(--font-ui);
-  font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(20, 18, 26, 0.12);
-  border-radius: 999px;
-  backdrop-filter: blur(8px);
-}
-.chip b { color: var(--pink); font-weight: 600; }
-h1 {
-  margin: 0 0 20px;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(2.5rem, 9vw, 5.25rem);
-  line-height: 1;
-  text-wrap: balance;
+  padding: 5.5rem 0 32px;
 }
 .lead {
   margin: 0 0 32px;
@@ -110,6 +73,8 @@ h1 {
   .cta .btn { width: 100%; }
   .content { padding-bottom: 8px; }
 }
+
+.enc { color: var(--pink); } /* scrambled characters while decrypting */
 
 /* ---- ?controls panel ---- */
 .panel {
