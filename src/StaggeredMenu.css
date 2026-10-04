@@ -402,3 +402,12 @@
 @media (prefers-reduced-motion: reduce) {
   .sm-logo, .sm-toggle, .sm-toggle:hover { animation: none; }
 }
+
+/* ---- six longer labels: wider panel, slightly smaller type ---- */
+.staggered-menu-panel,
+.sm-prelayers { width: clamp(300px, 40vw, 520px); }
+.sm-panel-item { font-size: clamp(1.9rem, 4.2vw, 2.75rem); padding-right: 1.6em; }
+@media (max-width: 1024px) {
+  .staggered-menu-panel,
+  .sm-prelayers { width: 100%; }
+}

@@ -11,10 +11,12 @@ const SHOW_PANEL = new URLSearchParams(window.location.search).has('controls');
 
 // placeholder links: point them at your real sections
 const MENU_ITEMS = [
+  { label: 'FAQ', link: '#faq', ariaLabel: 'FAQ' },
+  { label: 'Past competition', link: '#past-competition', ariaLabel: 'Past competition' },
+  { label: 'Organizers', link: '#organizers', ariaLabel: 'Organizers' },
+  { label: 'Resources', link: '#resources', ariaLabel: 'Resources' },
   { label: 'Register', link: '#register', ariaLabel: 'Register' },
-  { label: 'How it works', link: '#info', ariaLabel: 'How it works' },
-  { label: 'The prize', link: '#prize', ariaLabel: 'The prize' },
-  { label: 'FAQ', link: '#faq', ariaLabel: 'FAQ' }
+  { label: 'About', link: '#about', ariaLabel: 'About' }
 ];
 
 export default function App() {
