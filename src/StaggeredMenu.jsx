@@ -3,7 +3,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import './StaggeredMenu.css';
-import Decrypt from './Decrypt.jsx';
 
 export const StaggeredMenu = ({
   position = 'right',
@@ -404,12 +403,8 @@ export const StaggeredMenu = ({
             {items && items.length ? (
               items.map((it, idx) => (
                 <li className="sm-panel-itemWrap" key={it.label + idx}>
-                  <a className="sm-panel-item" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1}>
-                    <span className="sm-panel-itemLabel">
-                      {/* remount on open/close so the decrypt replays every time */}
-                      <Decrypt key={open ? 'o' : 'c'} text={it.label} animateOn="view" sequential revealDirection="start"
-                               speed={40} maxIterations={8} encryptedClassName="enc" />
-                    </span>
+                  <a className="sm-panel-item" href={it.link} aria-label={it.ariaLabel} data-index={idx + 1} onClick={closeMenu}>
+                    <span className="sm-panel-itemLabel">{it.label}</span>
                   </a>
                 </li>
               ))

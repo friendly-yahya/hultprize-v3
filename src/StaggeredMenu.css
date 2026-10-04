@@ -355,7 +355,7 @@
   }
 }
 
-/* ---- site overrides: blend into the hero, Doto labels, a little glitch ---- */
+/* ---- site overrides: blend into the hero, Doto labels ---- */
 .staggered-menu-header {
   padding: max(16px, env(safe-area-inset-top)) max(var(--pad, 20px), env(safe-area-inset-right)) 0
            max(var(--pad, 20px), env(safe-area-inset-left));
@@ -389,21 +389,6 @@
 }
 .sm-panel-list[data-numbering] .sm-panel-item::after { font-family: var(--font-ui); }
 
-@keyframes sm-glitch {
-  0%, 90%, 100% { transform: none; text-shadow: none; }
-  91% { transform: translate(-2px, 0); text-shadow: 2px 0 #EC2088, -2px 0 #4C7DFF; }
-  93% { transform: translate(2px, -1px); text-shadow: -2px 0 #EC2088, 2px 0 #4C7DFF; }
-  95% { transform: translate(-1px, 1px) skewX(-6deg); text-shadow: 2px 0 #EC2088, -2px 0 #4C7DFF; }
-  97% { transform: none; text-shadow: none; }
-}
-.sm-logo { animation: sm-glitch 7s steps(1, end) infinite; }
-.sm-toggle { animation: sm-glitch 9s steps(1, end) 2s infinite; }
-.sm-toggle:hover { animation: sm-glitch 0.6s steps(1, end) infinite; }
-@media (prefers-reduced-motion: reduce) {
-  html:not(.force-motion) .sm-logo,
-  html:not(.force-motion) .sm-toggle,
-  html:not(.force-motion) .sm-toggle:hover { animation: none; }
-}
 
 /* ---- six labels: wider panel, type sized so the longest word always fits ---- */
 .staggered-menu-panel,
@@ -426,3 +411,15 @@
   .sm-prelayers { width: 100%; }
   .sm-panel-item { font-size: clamp(1.4rem, calc((100vw - 64px) / 11.5), 2.75rem); }
 }
+
+.sm-logo a { color: inherit; text-decoration: none; }
+
+/* socials: body/UI font, not the headline font */
+.sm-socials-title {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sm-socials-link { font-family: var(--font-ui); font-size: 1rem; }
