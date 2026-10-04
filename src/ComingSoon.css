@@ -3,7 +3,8 @@
   min-height: 100dvh;
   display: grid;
   align-content: center;
-  justify-items: start;
+  justify-items: center;
+  text-align: center;
   gap: 16px;
   padding: 5.5rem max(var(--pad), env(safe-area-inset-right)) 3rem max(var(--pad), env(safe-area-inset-left));
   color: var(--ink);
@@ -16,9 +17,16 @@
   text-transform: uppercase;
   color: var(--pink);
 }
-.soon h1 { margin: 0; }
+.soon h1 {
+  margin: 0;
+  font-family: var(--font-ui); /* not Doto */
+  font-weight: 700;
+  font-size: clamp(2.6rem, 13vw, 9rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
 .soon-lead {
-  margin: 0 0 12px;
+  margin: 0 auto 12px;
   max-width: 30rem;
   font-size: clamp(0.95rem, 2.6vw, 1.05rem);
   line-height: 1.6;
