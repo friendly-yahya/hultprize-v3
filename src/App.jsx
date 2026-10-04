@@ -3,7 +3,7 @@ import Aurora from './Aurora.jsx';
 import Decrypt from './Decrypt.jsx';
 import { StaggeredMenu } from './StaggeredMenu.jsx';
 import { AURORA, AURORA_MOBILE } from './auroraConfig.js';
-import { useMedia } from './useMedia.js';
+import { useMedia, useReducedMotion } from './useMedia.js';
 
 // Controls are hidden. Open http://localhost:5173/?controls to tune; the panel is only loaded then.
 const Panel = lazy(() => import('./Panel.jsx'));
@@ -22,7 +22,7 @@ const MENU_ITEMS = [
 export default function App() {
   const [cfg, setCfg] = useState(AURORA);
   const phone = useMedia('(max-width: 640px)');
-  const reduce = useMedia('(prefers-reduced-motion: reduce)');
+  const reduce = useReducedMotion();
 
   return (
     <>
@@ -36,7 +36,7 @@ export default function App() {
         menuButtonColor="#14121a"
         openMenuButtonColor="#14121a"
         logo={
-          <Decrypt text="FSSM × Hult Prize" animateOn="view" sequential revealDirection="start"
+          <Decrypt text="FSSM × Hult Prize" animateOn="inViewHover" sequential revealDirection="start"
                    speed={45} maxIterations={8} encryptedClassName="enc" />
         }
       />
@@ -48,7 +48,7 @@ export default function App() {
 
         <section className="content">
           <h1>
-            <Decrypt text="The $1M Hult Prize comes to FSSM" animateOn="view" sequential revealDirection="start"
+            <Decrypt text="The $1M Hult Prize comes to FSSM" animateOn="inViewHover" sequential revealDirection="start"
                      speed={28} maxIterations={10} encryptedClassName="enc" style={{ display: 'block' }} />
           </h1>
           <p className="lead">
