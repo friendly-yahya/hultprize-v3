@@ -1,0 +1,12 @@
+.aurora-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* the canvas is rendered at 1/pixelSize resolution; stretch it back up with hard pixels */
+.aurora-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: pixelated;
+}
