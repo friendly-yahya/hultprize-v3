@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import Aurora from './Aurora.jsx';
 import ComingSoon from './ComingSoon.jsx';
 import Decrypt from './Decrypt.jsx';
+import RegisterPage from './RegisterPage.jsx';
 import { StaggeredMenu } from './StaggeredMenu.jsx';
 import { AURORA, AURORA_MOBILE } from './auroraConfig.js';
 import { useMedia, useReducedMotion } from './useMedia.js';
@@ -21,6 +22,9 @@ const MENU_ITEMS = [
 ];
 
 // placeholder URLs: swap in the club's real profiles
+// register page: black, white and grays only
+const REGISTER_MENU_COLORS = ['#1a1a1a', '#6e6e6e', '#d4d4d4'];
+
 const SOCIALS = [
   { label: 'Instagram', link: 'https://www.instagram.com/' },
   { label: 'TikTok', link: 'https://www.tiktok.com/' },
@@ -45,25 +49,29 @@ export default function App() {
   const phone = useMedia('(max-width: 640px)');
   const reduce = useReducedMotion();
   const hash = useHash();
-  const soon = hash !== '';
+  const register = hash === 'register';
+  const soon = hash !== '' && !register;
   const title = MENU_ITEMS.find((i) => i.link === `#${hash}`)?.label ?? (hash === 'info' ? 'How it works' : '');
 
   return (
     <>
       <StaggeredMenu
         isFixed
+        className={register ? 'on-dark' : ''}
         position="right"
         items={MENU_ITEMS}
         socialItems={SOCIALS}
         displaySocials
-        colors={['#FFBE98', '#4C7DFF', '#EC2088']}
-        accentColor="#EC2088"
-        menuButtonColor="#14121a"
-        openMenuButtonColor="#14121a"
+        colors={register ? REGISTER_MENU_COLORS : ['#FFBE98', '#4C7DFF', '#EC2088']}
+        accentColor={register ? '#8a8a8a' : '#EC2088'}
+        menuButtonColor={register ? '#000000' : '#14121a'}
+        openMenuButtonColor={register ? '#000000' : '#14121a'}
         logo={<a href="#">FSSM × Hult Prize</a>}
       />
 
-      {soon ? (
+      {register ? (
+        <RegisterPage />
+      ) : soon ? (
         <ComingSoon title={title} />
       ) : (
         <main className="hero">
@@ -95,3 +103,6 @@ export default function App() {
     </>
   );
 }
+
+
+

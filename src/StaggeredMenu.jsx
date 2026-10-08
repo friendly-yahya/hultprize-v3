@@ -42,6 +42,8 @@ export const StaggeredMenu = ({
   const toggleBtnRef = useRef(null);
   const busyRef = useRef(false);
   const itemEntranceTweenRef = useRef(null);
+  // only used for the very first paint; later color changes are handled by the color effect below
+  const initialButtonColorRef = useRef(menuButtonColor);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -68,10 +70,12 @@ export const StaggeredMenu = ({
       gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 90 });
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
       gsap.set(textInner, { yPercent: 0 });
-      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
+      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: initialButtonColorRef.current });
     });
     return () => ctx.revert();
-  }, [menuButtonColor, position]);
+    // NOT dependent on menuButtonColor: re-running this resets the panel offscreen, which made the menu
+    // snap shut mid-animation whenever the button color changed between pages
+  }, [position]);
 
   const buildOpenTimeline = useCallback(() => {
     const panel = panelRef.current;
@@ -437,3 +441,6 @@ export const StaggeredMenu = ({
 };
 
 export default StaggeredMenu;
+
+
+

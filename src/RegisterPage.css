@@ -1,0 +1,110 @@
+.register-page {
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  background: #000;
+  animation: register-in 0.7s ease both;
+}
+@keyframes register-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not(.force-motion) .register-page { animation: none; }
+}
+
+/* the page never scrolls, so let a finger drag in any direction (the default only tracks horizontal moves) */
+.register-page .dither-veil { touch-action: none; }
+
+/* menu on the register page: black, white and grays only; logo flips light over the dark page
+   (and back to dark while the white panel is open) */
+.on-dark { --ink: #000; --pink: #000; }
+.on-dark:not([data-open]) .sm-logo { color: #f4f1ea; }
+
+/* ---- title + the two choices (black, white and grays only; square corners) ---- */
+.register-ui {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(13vh, env(safe-area-inset-bottom));
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 0 max(var(--pad, 20px), env(safe-area-inset-right)) 0 max(var(--pad, 20px), env(safe-area-inset-left));
+  text-align: center;
+  color: #f4f1ea;
+  pointer-events: none; /* the cursor reveal underneath keeps working */
+  animation: register-rise 0.9s 0.4s ease backwards; /* backwards: if the animation never runs, the text is still visible */
+}
+.register-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(clamp(2rem, 7.5vw, 4.5rem) * var(--reg-scale, 1));
+  line-height: 1;
+  color: #f4f1ea;
+  text-wrap: balance;
+}
+.register-ui .enc { color: #8a8a8a; } /* scrambled characters while decrypting */
+.register-lead {
+  margin: 0;
+  max-width: 30rem;
+  font-size: calc(clamp(0.85rem, 2.4vw, 1rem) * var(--reg-scale, 1));
+  line-height: 1.6;
+  color: rgba(244, 241, 234, 0.7);
+}
+.register-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, calc(38rem * var(--reg-scale, 1)));
+  margin-top: 6px;
+}
+.choice {
+  pointer-events: auto;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  min-height: 72px;
+  padding: 14px 18px;
+  font-family: var(--font-ui);
+  text-align: left;
+  text-decoration: none;
+  border: 1px solid #f4f1ea;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.choice-name { font-size: calc(0.95rem * var(--reg-scale, 1)); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.choice-desc { font-size: calc(0.78rem * var(--reg-scale, 1)); opacity: 0.7; }
+.choice {
+  position: relative;
+  background: #000;
+  color: #f4f1ea;
+}
+.choice:hover, .choice:focus-visible { background: #f4f1ea; color: #000; }
+.choice:focus-visible { outline: 2px solid #f4f1ea; outline-offset: 3px; }
+
+@keyframes register-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 560px) {
+  .register-choices { grid-template-columns: 1fr; gap: 10px; }
+  .choice { min-height: 64px; padding: 12px 16px; }
+  .register-ui { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not(.force-motion) .register-ui { animation: none; }
+}
+
+/* the hidden default cursor is replaced by the target cursor, but keep a normal one over the tuning panel */
+.register-panel, .register-panel * { cursor: auto; }
+
+/* socials in the menu: the hovered link goes full black, the rest dim (the gray accent made it look like nothing happened) */
+.on-dark .sm-socials-link:hover,
+.on-dark .sm-socials-link:focus-visible { color: #000; }
