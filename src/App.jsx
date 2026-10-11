@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import Aurora from './Aurora.jsx';
 import ComingSoon from './ComingSoon.jsx';
 import Decrypt from './Decrypt.jsx';
+import RegisterForm from './RegisterForm.jsx';
 import RegisterPage from './RegisterPage.jsx';
 import { StaggeredMenu } from './StaggeredMenu.jsx';
 import { AURORA, AURORA_MOBILE } from './auroraConfig.js';
@@ -50,27 +51,32 @@ export default function App() {
   const reduce = useReducedMotion();
   const hash = useHash();
   const register = hash === 'register';
-  const soon = hash !== '' && !register;
-  const title = MENU_ITEMS.find((i) => i.link === `#${hash}`)?.label ?? (hash === 'info' ? 'How it works' : '');
+  const formTrack = hash === 'register/competitor' ? 'competitor' : hash === 'register/organizer' ? 'organizer' : null;
+  const mono = register || Boolean(formTrack); // the whole register area is black and white only
+  const soon = hash !== '' && !register && !formTrack;
+  const EXTRA_TITLES = { info: 'How it works', 'register/competitor': 'Register · Competitor', 'register/organizer': 'Register · Organizer' };
+  const title = MENU_ITEMS.find((i) => i.link === `#${hash}`)?.label ?? EXTRA_TITLES[hash] ?? '';
 
   return (
     <>
       <StaggeredMenu
         isFixed
-        className={register ? 'on-dark' : ''}
+        className={mono ? 'on-dark' : ''}
         position="right"
         items={MENU_ITEMS}
         socialItems={SOCIALS}
         displaySocials
-        colors={register ? REGISTER_MENU_COLORS : ['#FFBE98', '#4C7DFF', '#EC2088']}
-        accentColor={register ? '#8a8a8a' : '#EC2088'}
-        menuButtonColor={register ? '#000000' : '#14121a'}
-        openMenuButtonColor={register ? '#000000' : '#14121a'}
+        colors={mono ? REGISTER_MENU_COLORS : ['#FFBE98', '#4C7DFF', '#EC2088']}
+        accentColor={mono ? '#8a8a8a' : '#EC2088'}
+        menuButtonColor={mono ? '#000000' : '#14121a'}
+        openMenuButtonColor={mono ? '#000000' : '#14121a'}
         logo={<a href="#">FSSM × Hult Prize</a>}
       />
 
       {register ? (
         <RegisterPage />
+      ) : formTrack ? (
+        <RegisterForm key={formTrack} trackKey={formTrack} />
       ) : soon ? (
         <ComingSoon title={title} />
       ) : (
