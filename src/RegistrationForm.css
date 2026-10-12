@@ -75,3 +75,6 @@
 .reg-page, .reg-page * { cursor: auto; }
 .reg-page button, .reg-page a, .reg-page select { cursor: pointer; }
 .reg-page button:disabled { cursor: not-allowed; }
+
+/* honeypot, off-screen (not display:none, some bots skip those) */
+.reg-trap { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }

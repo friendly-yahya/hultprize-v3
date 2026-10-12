@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './supabase.js';
-import { sendCode, verifyCode, signOut, loadMine, allowedTracks, prefill, save } from './registration.js';
+import { loadLocal, submit, RegistrationError } from './registration.js';
 import './RegistrationForm.css';
 
 // ---- option lists: swap in your real ones ----
@@ -44,95 +43,48 @@ const Chips = ({ value, onChange, options }) => (
 );
 
 export default function RegistrationForm({ track }) {
-  const [phase, setPhase] = useState('loading'); // loading | email | code | form | blocked | done
+  const [phase, setPhase] = useState('form'); // form | done | blocked
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [cooldown, setCooldown] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [rows, setRows] = useState([]);
   const [general, setGeneral] = useState(EMPTY_GENERAL);
   const [details, setDetails] = useState(EMPTY_DETAILS[track]);
+  const [trap, setTrap] = useState(''); // honeypot: real people never see or fill it
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const [note, setNote] = useState('');
 
   const setG = (k) => (v) => setGeneral((g) => ({ ...g, [k]: v }));
   const setD = (k) => (v) => setDetails((d) => ({ ...d, [k]: v }));
 
-  // enter the form: load my rows, enforce the track rule, prefill
-  async function enter(userEmail) {
-    setEmail(userEmail);
-    try {
-      const mine = await loadMine();
-      setRows(mine);
-      if (!allowedTracks(mine).includes(track)) return setPhase('blocked');
-      const pre = prefill(track, mine);
-      setGeneral(pre?.general ?? EMPTY_GENERAL);
-      setDetails({ ...EMPTY_DETAILS[track], ...(pre?.details ?? {}) });
-      setNote(
-        pre?.alreadyRegistered ? 'You are already registered. Saving updates your answers.'
-        : pre ? 'We filled in your details from your earlier registration. Check them.' : ''
-      );
-      setPhase('form');
-    } catch (e) {
-      setError(e.message || 'Could not load your data.');
-      setPhase('email');
-    }
-  }
-
-  // already signed in (session survives reloads) -> skip straight to the form
+  // prefill from what this device submitted before (e.g. organizer answers reused for competitor)
   useEffect(() => {
-    let alive = true;
-    setPhase('loading');
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      const u = data.session?.user;
-      u ? enter(u.email) : setPhase('email');
-    });
-    return () => { alive = false; };
-  }, [track]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [cooldown]);
-
-  async function onSendCode(e) {
-    e?.preventDefault();
-    setError(''); setBusy(true);
-    const { error: err } = await sendCode(email);
-    setBusy(false);
-    if (err) return setError(err.message);
-    setCooldown(60);
-    setPhase('code');
-  }
-
-  async function onVerify(e) {
-    e.preventDefault();
-    setError(''); setBusy(true);
-    const { data, error: err } = await verifyCode(email, code);
-    setBusy(false);
-    if (err) return setError('That code is wrong or expired. Request a new one.');
-    enter(data.user.email);
-  }
+    setPhase('form'); setError('');
+    const local = loadLocal(track);
+    setEmail(local.email);
+    setGeneral(local.general ?? EMPTY_GENERAL);
+    setDetails({ ...EMPTY_DETAILS[track], ...(local.details ?? {}) });
+    setNote(local.general ? 'We filled in your details from your earlier registration on this device. Check them.' : '');
+  }, [track]);
 
   async function onSubmit(e) {
     e.preventDefault();
     setError('');
     const g = Object.fromEntries(Object.entries(general).map(([k, v]) => [k, v.trim()]));
     g.whatsapp = g.whatsapp.replace(/[\s().-]/g, '');
+    const mail = email.trim().toLowerCase();
     if (g.full_name.length < 3) return setError('Enter your full name.');
     if (!/^\+[0-9]{8,15}$/.test(g.whatsapp)) return setError('WhatsApp must look like +212612345678 (country code, digits only).');
     if (track === 'organizer' && !details.attendance_confirmed) return setError('Please confirm you will attend and do your tasks.');
     if (track === 'competitor' && !details.team_status) return setError('Tell us if you have a team.');
+    if (trap) return setPhase('done'); // bot: pretend it worked, save nothing
 
     setBusy(true);
     try {
-      await save(track, g, details);
+      await submit(track, mail, g, details);
+      setEmail(mail);
       setPhase('done');
     } catch (err) {
-      // surfaces RLS / constraint / trigger errors instead of failing silently
-      setError(err.message || 'Could not save. Try again.');
+      if (err instanceof RegistrationError && err.kind === 'blocked') setPhase('blocked');
+      else setError(err.message || 'Could not save. Try again.');
     } finally {
       setBusy(false);
     }
@@ -146,42 +98,10 @@ export default function RegistrationForm({ track }) {
         <p className="reg-kicker">FSSM × Hult Prize</p>
         <h1 className="reg-title">{TITLES[track]}</h1>
 
-        {phase === 'loading' && <p className="reg-lead">Loading…</p>}
-
-        {phase === 'email' && (
-          <form onSubmit={onSendCode} className="reg-form">
-            <p className="reg-lead">First, confirm your email. We send you a 6-digit code.</p>
-            <Field label="Email">
-              <input type="email" required autoComplete="email" inputMode="email" value={email}
-                     onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ma" />
-            </Field>
-            <button className="reg-btn" disabled={busy}>{busy ? 'Sending…' : 'Send code'}</button>
-          </form>
-        )}
-
-        {phase === 'code' && (
-          <form onSubmit={onVerify} className="reg-form">
-            <p className="reg-lead">Code sent to <b>{email}</b>. Check spam too.</p>
-            <Field label="6-digit code">
-              <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8}
-                     value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
-            </Field>
-            <div className="reg-row">
-              <button className="reg-btn" disabled={busy || code.length < 6}>{busy ? 'Checking…' : 'Confirm'}</button>
-              <button type="button" className="reg-btn ghost" disabled={cooldown > 0 || busy} onClick={onSendCode}>
-                {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
-              </button>
-              <button type="button" className="reg-btn ghost" onClick={() => { setPhase('email'); setCode(''); setError(''); }}>
-                Change email
-              </button>
-            </div>
-          </form>
-        )}
-
         {phase === 'blocked' && (
           <div className="reg-form">
             <p className="reg-lead">
-              You are registered as a competitor, so you can't register as an organizer.
+              This email is already registered as a competitor, so it can't register as an organizer.
               Organizers can take part in both.
             </p>
             <a className="reg-btn" href="#register/competitor">Go to competitor registration</a>
@@ -190,7 +110,9 @@ export default function RegistrationForm({ track }) {
 
         {phase === 'done' && (
           <div className="reg-form">
-            <p className="reg-lead">Done. You're registered as {track === 'competitor' ? 'a competitor' : 'an organizer'}.</p>
+            <p className="reg-lead">
+              <b>Sign-up successful.</b> You're registered as {track === 'competitor' ? 'a competitor' : 'an organizer'} with <b>{email}</b>.
+            </p>
             {track === 'organizer' && (
               <a className="reg-btn ghost" href={other}>Also register as a competitor</a>
             )}
@@ -200,18 +122,16 @@ export default function RegistrationForm({ track }) {
 
         {phase === 'form' && (
           <form onSubmit={onSubmit} className="reg-form">
-            <div className="reg-who">
-              <span>Signed in as <b>{email}</b></span>
-              <button type="button" className="reg-link" onClick={async () => { await signOut(); setPhase('email'); setEmail(''); setCode(''); }}>
-                Not you?
-              </button>
-            </div>
             {note && <p className="reg-note">{note}</p>}
 
             <fieldset>
               <legend>About you</legend>
               <Field label="Full name">
                 <input required minLength={3} maxLength={120} autoComplete="name" value={general.full_name} onChange={(e) => setG('full_name')(e.target.value)} />
+              </Field>
+              <Field label="Email">
+                <input type="email" required autoComplete="email" inputMode="email" maxLength={254} value={email}
+                       onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ma" />
               </Field>
               <Field label="WhatsApp number">
                 <input required inputMode="tel" autoComplete="tel" placeholder="+212612345678" value={general.whatsapp} onChange={(e) => setG('whatsapp')(e.target.value)} />
@@ -277,7 +197,9 @@ export default function RegistrationForm({ track }) {
               </fieldset>
             )}
 
-            <button className="reg-btn" disabled={busy}>{busy ? 'Saving…' : rows.some((r) => r.track === track) ? 'Save changes' : 'Submit'}</button>
+            <input className="reg-trap" tabIndex={-1} autoComplete="off" aria-hidden="true" name="website"
+                   value={trap} onChange={(e) => setTrap(e.target.value)} />
+            <button className="reg-btn" disabled={busy}>{busy ? 'Sending…' : 'Submit'}</button>
           </form>
         )}
 

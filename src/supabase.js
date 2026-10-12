@@ -11,10 +11,5 @@ if (!url || !key) {
   console.error('Supabase env vars missing: rebuild with .env.local in place');
 }
 
-export const supabase = createClient(url, key, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false // you route with #hash; a magic-link #access_token would collide. We use 6-digit codes instead.
-  }
-});
+// no logins on this site, so no sessions
+export const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });

@@ -1,64 +1,41 @@
 import { supabase } from './supabase.js';
 
-const GENERAL = ['university', 'faculty', 'degree', 'semester', 'field_of_study', 'full_name', 'whatsapp'];
-const clean = (email) => email.trim().toLowerCase();
+const KEY = 'hult_registration_v1';
 
-// ---- email confirmation (6-digit code, no redirect) ----
-export const sendCode = (email) =>
-  supabase.auth.signInWithOtp({ email: clean(email), options: { shouldCreateUser: true } });
-
-export const verifyCode = (email, token) =>
-  supabase.auth.verifyOtp({ email: clean(email), token: token.trim(), type: 'email' });
-
-export const signOut = () => supabase.auth.signOut();
-
-// ---- load my rows (also claims old pre-auth rows with the same email) ----
-export async function loadMine() {
-  await supabase.rpc('claim_registrations');
-  const { data, error } = await supabase
-    .from('registrations')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
+// ---- prefill lives on the visitor's own device only (nobody can look up anybody else's data) ----
+export function loadLocal(track) {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || '{}');
+    return { email: s.email ?? '', general: s.general ?? null, details: s.details?.[track] ?? null, done: s.done ?? [] };
+  } catch {
+    return { email: '', general: null, details: null, done: [] };
+  }
 }
 
-// ---- rules ----
-// organizer -> may register as both. competitor-only -> competitor only. nothing yet -> either.
-export function allowedTracks(rows) {
-  const has = (t) => rows.some((r) => r.track === t);
-  return has('competitor') && !has('organizer') ? ['competitor'] : ['competitor', 'organizer'];
+function saveLocal(track, email, general, details) {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || '{}');
+    localStorage.setItem(KEY, JSON.stringify({
+      email, general,
+      details: { ...(s.details ?? {}), [track]: details },
+      done: [...new Set([...(s.done ?? []), track])]
+    }));
+  } catch { /* storage blocked: prefill just won't work */ }
 }
 
-// ---- prefill ----
-// general intake comes from any earlier row (organizer data reused for competitor and vice versa);
-// track-specific details only from a row of the same track.
-export function prefill(track, rows) {
-  const same = rows.find((r) => r.track === track);
-  const any = same ?? rows[0];
-  if (!any) return null;
-  return {
-    general: Object.fromEntries(GENERAL.map((k) => [k, any[k]])),
-    details: same?.details ?? {},
-    alreadyRegistered: Boolean(same)
-  };
+export class RegistrationError extends Error {
+  constructor(kind, message) { super(message); this.kind = kind; } // kind: 'blocked' | 'duplicate' | 'other'
 }
 
-// ---- save (insert, or update if they already have a row for this track) ----
-export async function save(track, general, details) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Confirm your email first.');
+export async function submit(track, email, general, details) {
+  const row = { ...general, email, details, track };
+  const { error } = await supabase.from('registrations').insert(row);
 
-  const row = { ...general, details, track, email: user.email };
-
-  const { data: existing, error: findErr } = await supabase
-    .from('registrations').select('id').eq('track', track).maybeSingle();
-  if (findErr) throw findErr;
-
-  const { error } = existing
-    ? await supabase.from('registrations').update(row).eq('id', existing.id)
-    : await supabase.from('registrations').insert({ ...row, user_id: user.id });
-
-  // never swallow this: a silent catch is why "I filled the form and nothing showed up"
-  if (error) throw error;
+  if (error) {
+    // never swallow this: a silent catch is why "I filled the form and nothing showed up"
+    if (error.message?.includes('Competitors cannot')) throw new RegistrationError('blocked', error.message);
+    if (error.code === '23505') throw new RegistrationError('duplicate', 'This email is already registered for this track.');
+    throw new RegistrationError('other', error.message || 'Could not save. Try again.');
+  }
+  saveLocal(track, email, general, details);
 }
