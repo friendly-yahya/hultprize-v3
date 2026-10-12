@@ -2,8 +2,8 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import Aurora from './Aurora.jsx';
 import ComingSoon from './ComingSoon.jsx';
 import Decrypt from './Decrypt.jsx';
-import RegisterForm from './RegisterForm.jsx';
 import RegisterPage from './RegisterPage.jsx';
+import RegistrationForm from './RegistrationForm.jsx';
 import { StaggeredMenu } from './StaggeredMenu.jsx';
 import { AURORA, AURORA_MOBILE } from './auroraConfig.js';
 import { useMedia, useReducedMotion } from './useMedia.js';
@@ -50,33 +50,33 @@ export default function App() {
   const phone = useMedia('(max-width: 640px)');
   const reduce = useReducedMotion();
   const hash = useHash();
-  const register = hash === 'register';
-  const formTrack = hash === 'register/competitor' ? 'competitor' : hash === 'register/organizer' ? 'organizer' : null;
-  const mono = register || Boolean(formTrack); // the whole register area is black and white only
-  const soon = hash !== '' && !register && !formTrack;
-  const EXTRA_TITLES = { info: 'How it works', 'register/competitor': 'Register · Competitor', 'register/organizer': 'Register · Organizer' };
-  const title = MENU_ITEMS.find((i) => i.link === `#${hash}`)?.label ?? EXTRA_TITLES[hash] ?? '';
+  const [route, sub] = hash.split('/');
+  const picker = hash === 'register';
+  const form = route === 'register' && (sub === 'competitor' || sub === 'organizer');
+  const register = picker || form; // both use the dark menu theme
+  const soon = hash !== '' && !register;
+  const title = MENU_ITEMS.find((i) => i.link === `#${hash}`)?.label ?? (hash === 'info' ? 'How it works' : '');
 
   return (
     <>
       <StaggeredMenu
         isFixed
-        className={mono ? 'on-dark' : ''}
+        className={register ? 'on-dark' : ''}
         position="right"
         items={MENU_ITEMS}
         socialItems={SOCIALS}
         displaySocials
-        colors={mono ? REGISTER_MENU_COLORS : ['#FFBE98', '#4C7DFF', '#EC2088']}
-        accentColor={mono ? '#8a8a8a' : '#EC2088'}
-        menuButtonColor={mono ? '#000000' : '#14121a'}
-        openMenuButtonColor={mono ? '#000000' : '#14121a'}
+        colors={register ? REGISTER_MENU_COLORS : ['#FFBE98', '#4C7DFF', '#EC2088']}
+        accentColor={register ? '#8a8a8a' : '#EC2088'}
+        menuButtonColor={register ? '#000000' : '#14121a'}
+        openMenuButtonColor={register ? '#000000' : '#14121a'}
         logo={<a href="#">FSSM × Hult Prize</a>}
       />
 
-      {register ? (
+      {form ? (
+        <RegistrationForm track={sub} />
+      ) : picker ? (
         <RegisterPage />
-      ) : formTrack ? (
-        <RegisterForm key={formTrack} trackKey={formTrack} />
       ) : soon ? (
         <ComingSoon title={title} />
       ) : (
@@ -109,6 +109,3 @@ export default function App() {
     </>
   );
 }
-
-
-

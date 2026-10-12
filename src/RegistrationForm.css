@@ -1,0 +1,77 @@
+.reg-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #000;
+  color: #f4f1ea;
+  font-family: var(--font-body);
+  padding: 6rem max(var(--pad), env(safe-area-inset-right)) calc(4rem + env(safe-area-inset-bottom)) max(var(--pad), env(safe-area-inset-left));
+}
+.reg-wrap { max-width: 36rem; margin: 0 auto; display: grid; gap: 18px; }
+.reg-kicker { margin: 0; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8a8a; }
+.reg-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 8vw, 3.6rem);
+  line-height: 1;
+  text-wrap: balance;
+}
+.reg-lead { margin: 0; line-height: 1.6; color: rgba(244, 241, 234, 0.75); }
+.reg-form { display: grid; gap: 18px; }
+.reg-form fieldset { display: grid; gap: 16px; margin: 0; padding: 18px; border: 1px solid rgba(244, 241, 234, 0.35); border-radius: 0; min-width: 0; }
+.reg-form legend { padding: 0 8px; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.reg-field { display: grid; gap: 8px; font-size: 0.85rem; color: rgba(244, 241, 234, 0.8); }
+.reg-field > span { line-height: 1.4; }
+.reg-page input[type='text'],
+.reg-page input[type='email'],
+.reg-page input:not([type]),
+.reg-page input[inputmode],
+.reg-page select,
+.reg-page textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px; /* stops iOS zooming into the field */
+  color: #f4f1ea;
+  background: transparent;
+  border: 1px solid #f4f1ea;
+  border-radius: 0;
+  padding: 12px 14px;
+}
+.reg-page select option { color: #000; background: #f4f1ea; }
+.reg-page textarea { resize: vertical; }
+.reg-page input:focus-visible,
+.reg-page select:focus-visible,
+.reg-page textarea:focus-visible { outline: 2px solid #f4f1ea; outline-offset: 3px; }
+
+.reg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.reg-chips button {
+  font: inherit; font-size: 0.8rem; color: #f4f1ea; background: transparent;
+  border: 1px solid rgba(244, 241, 234, 0.5); border-radius: 0; padding: 8px 12px; cursor: pointer;
+}
+.reg-chips button.on { background: #f4f1ea; color: #000; border-color: #f4f1ea; }
+.reg-chips button:focus-visible { outline: 2px solid #f4f1ea; outline-offset: 2px; }
+
+.reg-check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; line-height: 1.5; }
+.reg-check input { margin-top: 4px; accent-color: #f4f1ea; }
+
+.reg-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.reg-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px;
+  font: inherit; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;
+  color: #000; background: #f4f1ea; border: 1px solid #f4f1ea; border-radius: 0; text-decoration: none; cursor: pointer;
+}
+.reg-btn.ghost { color: #f4f1ea; background: transparent; }
+.reg-btn:hover:not(:disabled) { opacity: 0.85; }
+.reg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.reg-btn:focus-visible { outline: 2px solid #f4f1ea; outline-offset: 3px; }
+
+.reg-who { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 0.8rem; color: rgba(244, 241, 234, 0.7); }
+.reg-link { font: inherit; color: #f4f1ea; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.reg-note { margin: 0; padding: 12px 14px; font-size: 0.85rem; line-height: 1.5; border-left: 3px solid #8a8a8a; background: rgba(244, 241, 234, 0.06); }
+.reg-error { margin: 0; padding: 12px 14px; font-size: 0.9rem; border: 1px solid #f4f1ea; background: rgba(244, 241, 234, 0.1); }
+
+/* the shared stylesheet hides the system cursor on the register page only; here we want the normal one */
+.reg-page, .reg-page * { cursor: auto; }
+.reg-page button, .reg-page a, .reg-page select { cursor: pointer; }
+.reg-page button:disabled { cursor: not-allowed; }
