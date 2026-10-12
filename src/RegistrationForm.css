@@ -78,3 +78,10 @@
 
 /* honeypot, off-screen (not display:none, some bots skip those) */
 .reg-trap { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* ---- segmented step progress ---- */
+.reg-steps { display: grid; gap: 10px; }
+.reg-steps-bar { display: grid; gap: 6px; }
+.reg-steps-bar span { height: 5px; background: rgba(244, 241, 234, 0.2); transition: background 0.25s ease; }
+.reg-steps-bar span.on { background: #f4f1ea; }
+.reg-steps-label { margin: 0; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244, 241, 234, 0.75); }

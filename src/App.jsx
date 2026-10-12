@@ -3,7 +3,7 @@ import Aurora from './Aurora.jsx';
 import ComingSoon from './ComingSoon.jsx';
 import Decrypt from './Decrypt.jsx';
 import RegisterPage from './RegisterPage.jsx';
-import RegistrationForm from './RegistrationForm.jsx';
+import RegisterForm from './RegisterForm.jsx';
 import { StaggeredMenu } from './StaggeredMenu.jsx';
 import { AURORA, AURORA_MOBILE } from './auroraConfig.js';
 import { useMedia, useReducedMotion } from './useMedia.js';
@@ -74,7 +74,7 @@ export default function App() {
       />
 
       {form ? (
-        <RegistrationForm track={sub} />
+        <RegisterForm key={sub} trackKey={sub} />
       ) : picker ? (
         <RegisterPage />
       ) : soon ? (

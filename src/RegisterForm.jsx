@@ -34,6 +34,42 @@ const clearDraft = (track) => {
   }
 };
 
+// answers shared by both tracks, carried over after a successful registration so the
+// second form opens prefilled. Only ids that exist in the opened form are used.
+// If your intake field ids differ, edit this list to match formConfig.js.
+const PROFILE_KEY = 'hp-reg-profile-v1';
+const SHARED_IDS = ['full_name', 'email', 'whatsapp', 'university', 'faculty', 'degree', 'semester', 'field_of_study'];
+
+const loadProfile = (steps) => {
+  try {
+    const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
+    if (!p || typeof p !== 'object') return {};
+    const ids = new Set(steps.flatMap((st) => st.fields.map((f) => f.id)));
+    const out = {};
+    for (const id of SHARED_IDS) {
+      if (!ids.has(id)) continue;
+      if (p[id] != null) out[id] = p[id];
+      if (p[otherKey(id)] != null) out[otherKey(id)] = p[otherKey(id)];
+    }
+    return out;
+  } catch {
+    return {};
+  }
+};
+
+const saveProfile = (answers) => {
+  try {
+    const out = {};
+    for (const id of SHARED_IDS) {
+      if (answers[id] != null) out[id] = answers[id];
+      if (answers[otherKey(id)] != null) out[otherKey(id)] = answers[otherKey(id)];
+    }
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(out));
+  } catch {
+    /* ignore */
+  }
+};
+
 // ---------- small building blocks ----------
 
 function Chips({ f, value, otherValue, onChange, onOther, describedBy, invalid }) {
@@ -203,7 +239,8 @@ export default function RegisterForm({ trackKey }) {
   const track = TRACKS[trackKey];
   const steps = track.steps;
 
-  const [answers, setAnswers] = useState(() => loadDraft(trackKey)?.answers || {});
+  const [answers, setAnswers] = useState(() => loadDraft(trackKey)?.answers || loadProfile(steps));
+  const [prefilled] = useState(() => !loadDraft(trackKey) && Object.keys(loadProfile(steps)).length > 0);
   const [stepIndex, setStepIndex] = useState(() => {
     const s = loadDraft(trackKey)?.step;
     return Number.isInteger(s) && s >= 0 && s < steps.length ? s : 0;
@@ -272,6 +309,7 @@ export default function RegisterForm({ trackKey }) {
     }
     try {
       await submitRegistration(buildRow(track, steps, answers));
+      saveProfile(answers);
       clearDraft(trackKey);
       setStatus('done');
     } catch (err) {
@@ -280,6 +318,8 @@ export default function RegisterForm({ trackKey }) {
       setSubmitError(
         code === 'duplicate'
           ? `This email is already registered as ${track.name.toLowerCase()}. If that wasn't you, or you need to change something, contact us.`
+          : code === 'blocked'
+            ? "This email is already registered as a competitor, so it can't register as an organizer. Organizers can take part in both."
           : code === 'network'
             ? "Couldn't reach the server. Check your connection and try again."
             : code === 'not_configured'
@@ -319,7 +359,8 @@ export default function RegisterForm({ trackKey }) {
           <p className="rf-lead">{track.doneText}</p>
           <div className="rf-nav">
             <a className="rf-btn rf-btn-primary" href="#">Back home</a>
-            <a className="rf-btn" href={`#register/${other}`}>Also register as {other}</a>
+            {/* organizers may also compete; competitors can't become organizers (enforced in the database too) */}
+            {trackKey === 'organizer' && <a className="rf-btn" href={`#register/${other}`}>Also register as {other}</a>}
           </div>
         </div>
       </main>
@@ -334,6 +375,10 @@ export default function RegisterForm({ trackKey }) {
         <p className="rf-step" aria-live="polite">Step {stepIndex + 1} of {steps.length}</p>
 
         <h1 className="rf-title" ref={headingRef} tabIndex={-1}>{step.title}</h1>
+
+        {prefilled && stepIndex === 0 && (
+          <p className="rf-devnote">We filled in your details from your earlier registration. Check them.</p>
+        )}
 
         {step.info && (
           <div className="rf-info">

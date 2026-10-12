@@ -1,45 +1,43 @@
-// Database layer. Registrations are inserted into a Supabase table through its REST API (no extra packages).
-// To use another backend, only this file needs to change.
-//
-// Set these in a .env file next to package.json (see .env.example). They are public values, safe in the browser,
-// because the table only allows inserts (see supabase/schema.sql).
+import { supabase } from './supabase.js';
 
-const URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const dbConfigured = Boolean(supabase);
 
-export const dbConfigured = Boolean(URL && KEY);
-
+// codes the form understands: duplicate | blocked | network | not_configured | failed
 export class ApiError extends Error {
-  constructor(code, detail) {
-    super(code);
-    this.code = code; // 'duplicate' | 'not_configured' | 'network' | 'failed'
-    this.detail = detail;
+  constructor(code, message) {
+    super(message || code);
+    this.code = code;
   }
 }
 
 export async function submitRegistration(row) {
-  if (!dbConfigured) {
-    // while developing without a database, show the payload and pretend it worked, so the form can be tested
+  if (!supabase) {
     if (import.meta.env.DEV) {
-      console.info('[registration] database not configured, would have sent:', row);
+      console.log('[dev] no database configured, registration not sent:', row);
       return;
     }
     throw new ApiError('not_configured');
   }
 
-  const headers = { apikey: KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
-  // legacy anon keys are JWTs and go in Authorization too; the newer publishable keys are not JWTs and must not
-  if (KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${KEY}`;
+  const clean = {
+    ...row,
+    email: typeof row.email === 'string' ? row.email.trim().toLowerCase() : row.email,
+    whatsapp: typeof row.whatsapp === 'string' ? row.whatsapp.replace(/[\s().-]/g, '') : row.whatsapp
+  };
 
-  let res;
+  let error;
   try {
-    res = await fetch(`${URL}/rest/v1/registrations`, { method: 'POST', headers, body: JSON.stringify(row) });
+    ({ error } = await supabase.from('registrations').insert(clean));
   } catch {
     throw new ApiError('network');
   }
-  if (res.ok) return;
+  if (!error) return;
 
-  const body = await res.json().catch(() => ({}));
-  if (res.status === 409 || body.code === '23505') throw new ApiError('duplicate');
-  throw new ApiError('failed', body.message || `HTTP ${res.status}`);
+  // never swallow this: it's what tells you why rows don't show up in the Table Editor
+  console.error('registration insert failed:', error);
+
+  if (error.code === '23505') throw new ApiError('duplicate');
+  if (/Competitors cannot/i.test(error.message || '')) throw new ApiError('blocked');
+  if (/fetch|network/i.test(error.message || '')) throw new ApiError('network');
+  throw new ApiError('failed', error.message);
 }

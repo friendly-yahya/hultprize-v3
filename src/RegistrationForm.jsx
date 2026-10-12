@@ -16,6 +16,11 @@ const EMPTY_DETAILS = {
   organizer: { skills_have: [], skills_want: [], attendance_confirmed: false, benefit: '' }
 };
 
+const STEPS = {
+  competitor: ['Contact', 'Studies', 'Idea & skills', 'Team'],
+  organizer: ['Contact', 'Studies', 'Skills', 'Commitment']
+};
+
 const TITLES = { competitor: 'Register as a competitor', organizer: 'Register as an organizer' };
 
 // ---- small field helpers ----
@@ -51,13 +56,14 @@ export default function RegistrationForm({ track }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
+  const [step, setStep] = useState(0);
 
   const setG = (k) => (v) => setGeneral((g) => ({ ...g, [k]: v }));
   const setD = (k) => (v) => setDetails((d) => ({ ...d, [k]: v }));
 
   // prefill from what this device submitted before (e.g. organizer answers reused for competitor)
   useEffect(() => {
-    setPhase('form'); setError('');
+    setPhase('form'); setError(''); setStep(0);
     const local = loadLocal(track);
     setEmail(local.email);
     setGeneral(local.general ?? EMPTY_GENERAL);
@@ -65,16 +71,32 @@ export default function RegistrationForm({ track }) {
     setNote(local.general ? 'We filled in your details from your earlier registration on this device. Check them.' : '');
   }, [track]);
 
+  const names = STEPS[track];
+  const last = names.length - 1;
+  const cleanWhatsapp = (v) => v.trim().replace(/[\s().-]/g, '');
+
+  // returns an error message for the current step, or '' when it's fine (native required/min/max already ran)
+  function validate(i) {
+    if (i === 0) {
+      if (general.full_name.trim().length < 3) return 'Enter your full name.';
+      if (!/^\+[0-9]{8,15}$/.test(cleanWhatsapp(general.whatsapp))) return 'WhatsApp must look like +212612345678 (country code, digits only).';
+    }
+    if (i === last && track === 'organizer' && !details.attendance_confirmed) return 'Please confirm you will attend and do your tasks.';
+    return '';
+  }
+
+  const goBack = () => { setError(''); setStep((i) => Math.max(0, i - 1)); window.scrollTo(0, 0); };
+
   async function onSubmit(e) {
     e.preventDefault();
     setError('');
+    const problem = validate(step);
+    if (problem) return setError(problem);
+    if (step < last) { setStep(step + 1); window.scrollTo(0, 0); return; }
+
     const g = Object.fromEntries(Object.entries(general).map(([k, v]) => [k, v.trim()]));
-    g.whatsapp = g.whatsapp.replace(/[\s().-]/g, '');
+    g.whatsapp = cleanWhatsapp(general.whatsapp);
     const mail = email.trim().toLowerCase();
-    if (g.full_name.length < 3) return setError('Enter your full name.');
-    if (!/^\+[0-9]{8,15}$/.test(g.whatsapp)) return setError('WhatsApp must look like +212612345678 (country code, digits only).');
-    if (track === 'organizer' && !details.attendance_confirmed) return setError('Please confirm you will attend and do your tasks.');
-    if (track === 'competitor' && !details.team_status) return setError('Tell us if you have a team.');
     if (trap) return setPhase('done'); // bot: pretend it worked, save nothing
 
     setBusy(true);
@@ -121,33 +143,49 @@ export default function RegistrationForm({ track }) {
         )}
 
         {phase === 'form' && (
-          <form onSubmit={onSubmit} className="reg-form">
-            {note && <p className="reg-note">{note}</p>}
+          <form onSubmit={onSubmit} className="reg-form" key={`${track}-${step}`}>
+            <div className="reg-steps" role="progressbar" aria-valuemin={1} aria-valuemax={names.length} aria-valuenow={step + 1}
+                 aria-label={`Step ${step + 1} of ${names.length}: ${names[step]}`}>
+              <div className="reg-steps-bar" style={{ gridTemplateColumns: `repeat(${names.length}, 1fr)` }}>
+                {names.map((n, i) => <span key={n} className={i <= step ? 'on' : ''} />)}
+              </div>
+              <p className="reg-steps-label">Step {step + 1} / {names.length} · {names[step]}</p>
+            </div>
 
-            <fieldset>
-              <legend>About you</legend>
-              <Field label="Full name">
-                <input required minLength={3} maxLength={120} autoComplete="name" value={general.full_name} onChange={(e) => setG('full_name')(e.target.value)} />
-              </Field>
-              <Field label="Email">
-                <input type="email" required autoComplete="email" inputMode="email" maxLength={254} value={email}
-                       onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ma" />
-              </Field>
-              <Field label="WhatsApp number">
-                <input required inputMode="tel" autoComplete="tel" placeholder="+212612345678" value={general.whatsapp} onChange={(e) => setG('whatsapp')(e.target.value)} />
-              </Field>
-              <Field label="University"><Select value={general.university} onChange={setG('university')} options={UNIVERSITIES} /></Field>
-              <Field label="Faculty"><Select value={general.faculty} onChange={setG('faculty')} options={FACULTIES} /></Field>
-              <Field label="Degree"><Select value={general.degree} onChange={setG('degree')} options={DEGREES} /></Field>
-              <Field label="Current semester"><Select value={general.semester} onChange={setG('semester')} options={SEMESTERS} /></Field>
-              <Field label="Field of study">
-                <input required maxLength={160} value={general.field_of_study} onChange={(e) => setG('field_of_study')(e.target.value)} />
-              </Field>
-            </fieldset>
+            {step === 0 && note && <p className="reg-note">{note}</p>}
 
-            {track === 'competitor' ? (
+            {step === 0 && (
               <fieldset>
-                <legend>Your idea and team</legend>
+                <legend>Contact</legend>
+                <Field label="Full name">
+                  <input required minLength={3} maxLength={120} autoComplete="name" value={general.full_name} onChange={(e) => setG('full_name')(e.target.value)} />
+                </Field>
+                <Field label="Email">
+                  <input type="email" required autoComplete="email" inputMode="email" maxLength={254} value={email}
+                         onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ma" />
+                </Field>
+                <Field label="WhatsApp number">
+                  <input required inputMode="tel" autoComplete="tel" placeholder="+212612345678" value={general.whatsapp} onChange={(e) => setG('whatsapp')(e.target.value)} />
+                </Field>
+              </fieldset>
+            )}
+
+            {step === 1 && (
+              <fieldset>
+                <legend>Studies</legend>
+                <Field label="University"><Select value={general.university} onChange={setG('university')} options={UNIVERSITIES} /></Field>
+                <Field label="Faculty"><Select value={general.faculty} onChange={setG('faculty')} options={FACULTIES} /></Field>
+                <Field label="Degree"><Select value={general.degree} onChange={setG('degree')} options={DEGREES} /></Field>
+                <Field label="Current semester"><Select value={general.semester} onChange={setG('semester')} options={SEMESTERS} /></Field>
+                <Field label="Field of study">
+                  <input required maxLength={160} value={general.field_of_study} onChange={(e) => setG('field_of_study')(e.target.value)} />
+                </Field>
+              </fieldset>
+            )}
+
+            {track === 'competitor' && step === 2 && (
+              <fieldset>
+                <legend>Idea & skills</legend>
                 <Field label="Do you have an idea that addresses one of the UN global goals?">
                   <Select value={details.has_idea} onChange={setD('has_idea')} options={['Yes', 'Not yet']} />
                 </Field>
@@ -161,6 +199,12 @@ export default function RegistrationForm({ track }) {
                 <Field label="Aside from money, which skills stop you from starting a business?">
                   <textarea rows={3} maxLength={1000} value={details.blockers} onChange={(e) => setD('blockers')(e.target.value)} />
                 </Field>
+              </fieldset>
+            )}
+
+            {track === 'competitor' && step === 3 && (
+              <fieldset>
+                <legend>Team</legend>
                 <Field label="Team">
                   <Select value={details.team_status} onChange={setD('team_status')}
                           options={['I need teammates', 'I already have a full team']} />
@@ -176,13 +220,11 @@ export default function RegistrationForm({ track }) {
                   <Select value={details.english_comfort} onChange={setD('english_comfort')} options={['Yes', 'Somewhat', 'No']} />
                 </Field>
               </fieldset>
-            ) : (
+            )}
+
+            {track === 'organizer' && step === 2 && (
               <fieldset>
-                <legend>Organizing</legend>
-                <p className="reg-note">
-                  Last year some members didn't do their tasks, skipped events and caused problems inside the team.
-                  Only register if you will show up and do the work.
-                </p>
+                <legend>Skills</legend>
                 <div className="reg-field"><span>Skills you have</span>
                   <Chips value={details.skills_have} onChange={setD('skills_have')} options={SKILLS} /></div>
                 <div className="reg-field"><span>Skills you want to learn</span>
@@ -190,6 +232,16 @@ export default function RegistrationForm({ track }) {
                 <Field label="What would you want to get out of the club?">
                   <textarea rows={3} maxLength={1000} value={details.benefit} onChange={(e) => setD('benefit')(e.target.value)} />
                 </Field>
+              </fieldset>
+            )}
+
+            {track === 'organizer' && step === 3 && (
+              <fieldset>
+                <legend>Commitment</legend>
+                <p className="reg-note">
+                  Last year some members didn't do their tasks, skipped events and caused problems inside the team.
+                  Only register if you will show up and do the work.
+                </p>
                 <label className="reg-check">
                   <input type="checkbox" checked={details.attendance_confirmed} onChange={(e) => setD('attendance_confirmed')(e.target.checked)} />
                   <span>I confirm I will attend the events and do my tasks.</span>
@@ -199,7 +251,11 @@ export default function RegistrationForm({ track }) {
 
             <input className="reg-trap" tabIndex={-1} autoComplete="off" aria-hidden="true" name="website"
                    value={trap} onChange={(e) => setTrap(e.target.value)} />
-            <button className="reg-btn" disabled={busy}>{busy ? 'Sending…' : 'Submit'}</button>
+
+            <div className="reg-row">
+              {step > 0 && <button type="button" className="reg-btn ghost" onClick={goBack} disabled={busy}>Back</button>}
+              <button className="reg-btn" disabled={busy}>{step < last ? 'Next' : busy ? 'Sending…' : 'Submit'}</button>
+            </div>
           </form>
         )}
 
