@@ -1,0 +1,63 @@
+.credit {
+  margin: 0;
+  font-family: var(--font-ui, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+.credit-fixed {
+  position: fixed;
+  z-index: 30; /* above the page, below the menu (z-index 40) */
+  right: max(var(--pad, 20px), env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+}
+.credit-inline { margin-top: 56px; text-align: center; }
+.credit-light { color: #14121a; }
+.credit-dark { color: rgba(244, 241, 234, 0.7); }
+
+.credit-name {
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.credit-dark .credit-name:hover { color: #f4f1ea; }
+.credit-name:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+/* ---- gif dialog ---- */
+.credit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.88);
+}
+.credit-modal, .credit-modal * { cursor: auto; }
+.credit-modal button { cursor: pointer; }
+.credit-card { display: grid; gap: 16px; justify-items: center; max-width: min(92vw, 30rem); }
+.credit-card img { display: block; max-width: 100%; max-height: 70vh; border: 1px solid #f4f1ea; }
+.credit-close {
+  min-height: 44px;
+  padding: 0 24px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #000;
+  background: #f4f1ea;
+  border: 1px solid #f4f1ea;
+  border-radius: 0;
+}
+.credit-close:hover { background: #000; color: #f4f1ea; }
+.credit-close:focus-visible { outline: 2px solid #f4f1ea; outline-offset: 3px; }
+
+/* decrypt scramble colour on the black registration forms (the global .enc is pink) */
+.rf .enc { color: #8a8a8a; }

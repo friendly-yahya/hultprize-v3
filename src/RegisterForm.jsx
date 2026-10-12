@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TRACKS, COMPETITION_FAQ, COMPETITION_BENEFITS } from './formConfig.js';
 import { buildRow, isVisible, resolveField, validateStep, OTHER, otherKey } from './formLogic.js';
 import { submitRegistration, dbConfigured, ApiError } from './api.js';
+import Decrypt from './Decrypt.jsx';
+import Credit from './Credit.jsx';
 import './RegisterForm.css';
 
 const MIN_FILL_MS = 4000; // a form filled out faster than this is a bot
@@ -355,13 +357,17 @@ export default function RegisterForm({ trackKey }) {
       <main className="rf">
         <div className="rf-inner">
           <p className="rf-kicker">Register · {track.name}</p>
-          <h1 className="rf-title" ref={headingRef} tabIndex={-1}>{track.doneTitle}</h1>
+          <h1 className="rf-title" ref={headingRef} tabIndex={-1}>
+            <Decrypt text={track.doneTitle} animateOn="view" sequential revealDirection="start" speed={40} maxIterations={10}
+                     encryptedClassName="enc" style={{ display: 'block' }} />
+          </h1>
           <p className="rf-lead">{track.doneText}</p>
           <div className="rf-nav">
             <a className="rf-btn rf-btn-primary" href="#">Back home</a>
             {/* organizers may also compete; competitors can't become organizers (enforced in the database too) */}
             {trackKey === 'organizer' && <a className="rf-btn" href={`#register/${other}`}>Also register as {other}</a>}
           </div>
+          <Credit inline />
         </div>
       </main>
     );
@@ -374,7 +380,10 @@ export default function RegisterForm({ trackKey }) {
         <div className="rf-progress" aria-hidden="true">{progress}</div>
         <p className="rf-step" aria-live="polite">Step {stepIndex + 1} of {steps.length}</p>
 
-        <h1 className="rf-title" ref={headingRef} tabIndex={-1}>{step.title}</h1>
+        <h1 className="rf-title" ref={headingRef} tabIndex={-1}>
+          <Decrypt key={step.id} text={step.title} animateOn="view" sequential revealDirection="start" speed={40} maxIterations={10}
+                   encryptedClassName="enc" style={{ display: 'block' }} />
+        </h1>
 
         {prefilled && stepIndex === 0 && (
           <p className="rf-devnote">We filled in your details from your earlier registration. Check them.</p>
@@ -409,6 +418,8 @@ export default function RegisterForm({ trackKey }) {
             {status === 'sending' ? 'Sending…' : last ? 'Send registration' : 'Next'}
           </button>
         </div>
+
+        <Credit inline />
       </form>
     </main>
   );

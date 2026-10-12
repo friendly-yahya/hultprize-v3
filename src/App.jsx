@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Aurora from './Aurora.jsx';
 import ComingSoon from './ComingSoon.jsx';
+import Credit from './Credit.jsx';
 import Decrypt from './Decrypt.jsx';
 import RegisterPage from './RegisterPage.jsx';
 import RegisterForm from './RegisterForm.jsx';
@@ -22,14 +23,13 @@ const MENU_ITEMS = [
   { label: 'About', link: '#about', ariaLabel: 'About' }
 ];
 
-// placeholder URLs: swap in the club's real profiles
 // register page: black, white and grays only
 const REGISTER_MENU_COLORS = ['#1a1a1a', '#6e6e6e', '#d4d4d4'];
 
 const SOCIALS = [
-  { label: 'Instagram', link: 'https://www.instagram.com/' },
-  { label: 'TikTok', link: 'https://www.tiktok.com/' },
-  { label: 'LinkedIn', link: 'https://www.linkedin.com/' }
+  { label: 'Instagram', link: 'https://www.instagram.com/hultprizefssm/' },
+  { label: 'TikTok', link: 'https://www.tiktok.com/@hultprize_fssm' },
+  { label: 'LinkedIn', link: 'https://www.linkedin.com/in/hult-prize-fssm-uca-694325335/' }
 ];
 
 function useHash() {
@@ -106,6 +106,8 @@ export default function App() {
           )}
         </main>
       )}
+
+      {!form && <Credit tone={picker ? 'dark' : 'light'} />}
     </>
   );
 }
